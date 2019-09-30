@@ -8,60 +8,42 @@ nano <- read.delim('/icgc/dkfzlsdf/analysis/B260/projects/chromothripsis_medullo
 summary(nano$V5-nano$V4)
 summary(wgs$V5-wgs$V4)
 
-if(F){
-  
-  # BED gene model
-  bed <- read.delim('/icgc/dkfzlsdf/analysis/B260/users/n790i/tools/binning_the_genome/humangenes_biomart_GRCh37p13_TranscriptStartEnd.sort.merged.unique.bed',as.is = T,header = T,stringsAsFactors = F,check.names = F)
-  summary(bed$end-bed$start)
-  
-  # filter BED gene model, keep only genes having a spanning haploblocks
-  genes_wo_blocks <- read.delim('outs/tmp_analysis/genes_without_blocks.bed',as.is = T,header = F,stringsAsFactors = F)
-  
-  length(unique(genes_wo_blocks$V5))/length(unique(bed$GeneID)) # fraction of genes without haplotype blocks
-  
-  bed <- bed[which(!bed$GeneID %in% unique(genes_wo_blocks$V5)),] # filtered genes
-  write.table(bed,file = "outs/tmp_analysis/humangenes_biomart_GRCh37p13_TranscriptStartEnd.sort.merged.unique.FILT.bed",col.names = T,sep = '\t',row.names = F,quote = F)
-  
-}
 
-# intersect data
-#intersectBed -a humangenes_biomart_GRCh37p13_TranscriptStartEnd.sort.merged.unique.FILT.bed -b phased_Hg19_Nanopore.sort.noChr.bed -wao > genes_intersect_haploblocks.bed
-#intersectBed -a phased_Hg19_Nanopore.sort.noChr.bed -b phased_Hg19_Nanopore.sort.noChr.vcf -wa -wb > haploblocks_intersect_snps.bed
+# process data
 
-# process intersect data
+# intersectBed -a phased_Hg19_Nanopore.sort.noChr.bed -b /icgc/dkfzlsdf/analysis/B260/users/n790i/tools/binning_the_genome/humangenes_biomart_GRCh37p13_TranscriptStartEnd.sort.merged.unique.bed -wb > blocks_int_genes.bed
+blocks_int_genes <- read.delim('outs/tmp_analysis/blocks_int_genes.bed',as.is = T,header = F,stringsAsFactors = F,check.names = F)
+summary(blocks_int_genes$V3-blocks_int_genes$V2)
+blocks_int_genes <- blocks_int_genes[which(blocks_int_genes$V3-blocks_int_genes$V2 > 0),]
+blocks_int_genes <- blocks_int_genes[order(blocks_int_genes[,1],blocks_int_genes[,2],blocks_int_genes[,3]),]
 
-genes_blocks <- read.delim('outs/tmp_analysis/genes_intersect_haploblocks.bed',as.is = T,header = F,stringsAsFactors = F,check.names = F)
-genes_blocks <- genes_blocks[which( genes_blocks$V10 > 0 ),]
-  
-summary(genes_blocks$V10,100)
+# count n. snps per haploblock
+# intersectBed -a blocks_int_genes.bed -b phased_Hg19_Nanopore.sort.noChr.OnlyPhased.vcf -c > blocks_int_genes_SNPs_count.bed
+snps_count <- read.delim('outs/tmp_analysis/blocks_int_genes_SNPs_count.bed',as.is = T,header = F,stringsAsFactors = F,check.names = F)
 
 # check genes spanned by multiple haploblocks  
-tocheck <- unique(genes_blocks$V5[which(duplicated(genes_blocks$V5))])
+tocheck <- unique(blocks_int_genes$V8[which(duplicated(blocks_int_genes$V8))])
 
-length(tocheck)/length(unique(genes_blocks$V5)) # fraction of genes spanned by multiple haploblocks
+length(tocheck)/length(unique(blocks_int_genes$V8)) # fraction of genes spanned by multiple haploblocks
 
-TabGenesBlocks <- genes_blocks[which(!genes_blocks$V5 %in% tocheck),]
-TabGenesBlocks$haploblock <- paste(TabGenesBlocks$V6,TabGenesBlocks$V7,TabGenesBlocks$V8,sep = ':')
-
-# phased SNPs per intersected gene and haplotypeblock 
-gbs <- read.delim('outs/tmp_analysis/genes_intersect_haploblocks.bed',as.is = T,header = F,stringsAsFactors = F,check.names = F)
+TabBlocksGenes <- blocks_int_genes[which(!blocks_int_genes$V8 %in% tocheck),]
 
 for(id in tocheck){
   message(id)
-  count <- gbs[which(gbs$V5 == id),]
-  count$haploblock <- paste(count$V6,count$V7,count$V8,sep = ':')
-  
-  this <- genes_blocks[which(genes_blocks$V5 == id),]
-  this$haploblock <- paste(this$V6,this$V7,this$V8,sep = ':')
-  
-  block_to_add <- this[which(this$haploblock == count$haploblock[which.max(count$V10)]),]
-  
-  TabGenesBlocks <- rbind(TabGenesBlocks, block_to_add)
+  m <- snps_count[which(snps_count$V8 == id),]
+  m <- m[which.max(m$V10),]
+  group <- paste(m$V1,m$V2,m$V3,sep = ":")
+  all <- paste(blocks_int_genes$V1,blocks_int_genes$V2,blocks_int_genes$V3,sep = ":")
+  TabBlocksGenes <- rbind(TabBlocksGenes,blocks_int_genes[which(all==group),])
 }
 
 
-which(duplicated(TabGenesBlocks$V5)) # check for duplicates 
+which(duplicated(TabBlocksGenes$V8)) # sanity check for duplicates 
 
-TabGenesBlocks <- TabGenesBlocks[order(TabGenesBlocks[,1],TabGenesBlocks[,2],TabGenesBlocks[,3]),]
+TabBlocksGenes <- TabBlocksGenes[order(TabBlocksGenes[,1],TabBlocksGenes[,2],TabBlocksGenes[,3]),]
 
-# link haploblocks to snps
+write.table(x = TabBlocksGenes,file = "outs/tmp_analysis/TabBlocksGenes.bed",quote = F,col.names = F,row.names = F,sep = "\t")
+
+# intersect TabBlocksGenes and phased SNPs
+# intersectBed -a TabBlocksGenes.bed -b phased_Hg19_Nanopore.sort.noChr.OnlyPhased.vcf -wa -wb > TabBlocksGenes_with_phasedSNPs.bed
+
