@@ -47,3 +47,13 @@ write.table(x = TabBlocksGenes,file = "outs/tmp_analysis/TabBlocksGenes.bed",quo
 # intersect TabBlocksGenes and phased SNPs
 # intersectBed -a TabBlocksGenes.bed -b phased_Hg19_Nanopore.sort.noChr.OnlyPhased.vcf -wa -wb > TabBlocksGenes_with_phasedSNPs.bed
 
+library( data.table )
+mat <- fread(input = 'outs/tmp_analysis/TabBlocksGenes_with_phasedSNPs.bed',sep = '\t',header = F,data.table = F)
+snps_per_gene <- data.frame(table(mat$V8))
+colnames(snps_per_gene) <- c('gene','n.phasedSNPs')
+
+summary(snps_per_gene$n.phasedSNPs)
+
+
+
+
