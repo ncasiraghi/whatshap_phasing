@@ -37,7 +37,6 @@ for(id in tocheck){
   TabBlocksGenes <- rbind(TabBlocksGenes,blocks_int_genes[which(all==group),])
 }
 
-
 which(duplicated(TabBlocksGenes$V8)) # sanity check for duplicates 
 
 TabBlocksGenes <- TabBlocksGenes[order(TabBlocksGenes[,1],TabBlocksGenes[,2],TabBlocksGenes[,3]),]
@@ -54,6 +53,6 @@ colnames(snps_per_gene) <- c('gene','n.phasedSNPs')
 
 summary(snps_per_gene$n.phasedSNPs)
 
-
+# how many of these SNPs are covered in at least one cell ?
 
 
