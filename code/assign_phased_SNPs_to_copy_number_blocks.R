@@ -56,6 +56,7 @@ for(k in clusters){
   # step 3 : 
   step3 <- paste0('step3_',k,'.bed')
   cmd <- paste('mergeBed -i',step2,'-d -1 -c 4 -o count,mean,median,collapse >',step3)
+  system(cmd)
   
   m <- read.delim(file = step3,header = FALSE,as.is = TRUE,stringsAsFactors = FALSE)
   
