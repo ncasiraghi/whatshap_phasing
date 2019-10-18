@@ -5,6 +5,7 @@ haplotype_blocks <- "/icgc/dkfzlsdf/analysis/B260/projects/chromothripsis_medull
 
 phased_snps <- "/icgc/dkfzlsdf/analysis/B260/projects/chromothripsis_medulloblastoma/whatshap_phasing/outs/tmp_analysis/phased_Hg19_Nanopore.sort.noChr.OnlyPhased.vcf"
 
+# setwd('/icgc/dkfzlsdf/analysis/B260/projects/chromothripsis_medulloblastoma/whatshap_phasing/outs/copy_number_blocks_10xCNV_data/12_clusters_362cells/')
 setwd('/icgc/dkfzlsdf/analysis/B260/projects/chromothripsis_medulloblastoma/whatshap_phasing/outs/copy_number_blocks_10xCNV_data/9_clusters_362cells/')
 # setwd('/icgc/dkfzlsdf/analysis/B260/projects/chromothripsis_medulloblastoma/whatshap_phasing/outs/copy_number_blocks_GTseq_data/')
 
@@ -99,10 +100,55 @@ for(k in clusters){
   # step 5 : write haplo type blocks with associated copy number
   step5 <- paste0('step5_',k,'.bed')
   write.table(tab,file = step5,col.names = FALSE,row.names = FALSE,quote = FALSE,sep = "\t")
-  
-  # step 6 : add phased SNPs to each block
-  step6 <- paste0('step6_',k,'.bed')
-  cmd <- paste('intersectBed -a',step5,'-b',phased_snps,'-wa -wb >',step6)
-  system(cmd)
-  
+
 }
+
+# keep only haplotype blocks that are common to all clusters
+
+ks <- list.files(path = ".",pattern = 'step5_',full.names = TRUE)
+
+a <- read.delim(file = ks[1],stringsAsFactors = FALSE,header = F)
+a$group <- paste(a[,1],a[,2],a[,3],sep = ":")
+
+a <- a[,c(5,4)]
+colnames(a)[2] <- basename(ks[1])
+
+for(k in seq(2,length(ks))){
+  message(k)
+  b <- read.delim(file = ks[k],stringsAsFactors = FALSE,header = F)
+  b$group <- paste(b[,1],b[,2],b[,3],sep = ":")
+  
+  b <- b[,c(5,4)]
+  colnames(b)[2] <- basename(ks[k])
+  
+  a <- merge(x = a,y = b,by='group',all = TRUE)
+}
+
+row.has.na <- apply(a, 1, function(x){any(is.na(x))})
+sum(row.has.na)/nrow(a)
+
+hb_to_keep <- a[!row.has.na,]
+
+for(k in seq(2,length(ks))){
+  message(k)
+  
+  # step 6 : filter haplotype blocks
+  step6 <- paste0('step6_',k,'.bed')
+  
+  m <- read.delim(file = ks[k],stringsAsFactors = FALSE,header = F)
+  m$group <- paste(m[,1],m[,2],m[,3],sep = ":")
+  
+  m <- m[which(m$group %in% unique(hb_to_keep$group)),]
+  
+  write.table(m[,1:4],file = step6,col.names = FALSE,row.names = FALSE,quote = FALSE,sep = "\t")
+  
+  # step 7 : add phased SNPs to each block
+  step7 <- paste0('step7_',k,'.bed')
+  cmd <- paste('intersectBed -a',step6,'-b',phased_snps,'-wa -wb >',step7)
+  system(cmd)
+
+}
+
+
+
+
