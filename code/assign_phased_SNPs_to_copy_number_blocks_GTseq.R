@@ -1,13 +1,12 @@
-single_cells_bed <- list.files(path = "/icgc/dkfzlsdf/analysis/B260/projects/chromothripsis_medulloblastoma/single_cell_cn_10x/dna/sample1.genemodel.transcript/tmp.parallel",pattern = 'cellid_',full.names = T)
-# single_cells_bed <- list.files(path = "/icgc/dkfzlsdf/analysis/B260/projects/chromothripsis_medulloblastoma/single_cell_cn_GTseq/dna/cnvkit/wgs_normal_as_ctrl_bin_1Mb/cns_bed",pattern = 'cellid_',full.names = T)
+# module load bedtools
+
+single_cells_bed <- list.files(path = "/icgc/dkfzlsdf/analysis/B260/projects/chromothripsis_medulloblastoma/single_cell_cn_GTseq/dna/cnvkit/wgs_normal_as_ctrl_bin_20kb_as_CellRanger/cns_bed/",pattern = '\\.nochr.bed$',full.names = T)
 
 haplotype_blocks <- "/icgc/dkfzlsdf/analysis/B260/projects/chromothripsis_medulloblastoma/whatshap_phasing/outs/tmp_analysis/phased_Hg19_Nanopore.sort.noChr.bed"
 
 phased_snps <- "/icgc/dkfzlsdf/analysis/B260/projects/chromothripsis_medulloblastoma/whatshap_phasing/outs/tmp_analysis/phased_Hg19_Nanopore.sort.noChr.OnlyPhased.vcf"
 
-setwd('/icgc/dkfzlsdf/analysis/B260/projects/chromothripsis_medulloblastoma/whatshap_phasing/outs/copy_number_blocks_10xCNV_data/12_clusters_362cells/')
-# setwd('/icgc/dkfzlsdf/analysis/B260/projects/chromothripsis_medulloblastoma/whatshap_phasing/outs/copy_number_blocks_10xCNV_data/9_clusters_362cells/')
-# setwd('/icgc/dkfzlsdf/analysis/B260/projects/chromothripsis_medulloblastoma/whatshap_phasing/outs/copy_number_blocks_GTseq_data/')
+setwd('/icgc/dkfzlsdf/analysis/B260/projects/chromothripsis_medulloblastoma/whatshap_phasing/outs/copy_number_blocks_GTseq_data/9_clusters_eb_method/')
 
 # intersect haplotype blocks and phased snps
 cmd <- paste('intersectBed -a',haplotype_blocks,'-b',phased_snps,'-wa -wb > haplotype_blocks_with_phasedSNPs.bed')
@@ -20,21 +19,14 @@ x <- read.delim('haplotype_blocks_with_phasedSNPs_count.bed',stringsAsFactors = 
 summary(x$V5)
 summary(x$V3-x$V2)
 
-# n. of phased SNPs per haplotype block
+# G&T-seq scDNA
+scdna_clusters <- read.delim("/icgc/dkfzlsdf/analysis/B260/projects/chromothripsis_medulloblastoma/data/10xCNV/help_files/STP-PDX_G&T_bin_20kb_as_CellRanger/cluster9_eb_cell_ids.txt")
 
-# cluster cells based on Hana's clustering 
-# scdna_clusters <- read.csv("/icgc/dkfzlsdf/analysis/B260/users/v390v/cnv_inference/data/raw/first_sample/scDNA/evo_dist_9_clustering.csv")
-# scdna_clusters <- scdna_clusters[,2:4]
-
-# scdna_clusters <- read.delim("/icgc/dkfzlsdf/analysis/B260/projects/chromothripsis_medulloblastoma/data/10xCNV/STP/STP-Nuclei/processed_data/cluster9_cell_ids.txt")
-scdna_clusters <- read.delim("/icgc/dkfzlsdf/analysis/B260/projects/chromothripsis_medulloblastoma/data/10xCNV/STP/STP-Nuclei/processed_data/cluster12_cell_ids.txt")
-
-scdna_clusters <- scdna_clusters[,2:3]
 colnames(scdna_clusters) <- c("CELL_ID","LABEL")
 barplot(table(scdna_clusters$LABEL),xlab = 'clusters (based on scDNA)',ylab = 'n. of cells') # n. cells per cluster. cluster 8 is the normal-cells cluster
 
 scdna_bed <- data.frame(BED=single_cells_bed,CELL_ID=NA,stringsAsFactors = F)
-scdna_bed$CELL_ID <- as.numeric(gsub(basename(scdna_bed$BED),pattern = 'cellid_|\\.bed$',replacement = ''))
+scdna_bed$CELL_ID <- gsub(basename(scdna_bed$BED),pattern = 'lane1DNA|_sequence.cbs.nochr.bed',replacement = '')
 
 scdna_bed <- merge(scdna_bed,scdna_clusters,by = 'CELL_ID',all.x = TRUE)
 scdna_bed <- scdna_bed[which(!is.na(scdna_bed$LABEL)),]
