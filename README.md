@@ -1,4 +1,4 @@
-# Assign copy number status and phased SNPs to Haplotype blocks.
+## Assign copy number and phased SNPs to Haplotype blocks.
 
 ### Input 1. Copy number profiles
 Each entry indicates the copy number status of a genomic segment.<br/>
