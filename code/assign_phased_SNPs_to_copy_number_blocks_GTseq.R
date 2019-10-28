@@ -1,4 +1,4 @@
-# module load bedtools
+# module load bedtools/2.24.0 bedops/2.4.14
 
 single_cells_bed <- list.files(path = "/icgc/dkfzlsdf/analysis/B260/projects/chromothripsis_medulloblastoma/single_cell_cn_GTseq/dna/cnvkit/wgs_normal_as_ctrl_bin_20kb_as_CellRanger/cns_bed/",pattern = '\\.nochr.bed$',full.names = T)
 
@@ -44,7 +44,8 @@ for(k in clusters){
   
   # step 2 : intersect step1 with all BEDs to assign CN to each genomic segment 
   step2 <- paste0('step2_',k,'.bed')
-  cmd <- paste('intersectBed -a',step1,'-b',multiple_beds,'-wa -wb | cut -f1,2,3,8 >',step2)
+  # cmd <- paste('intersectBed -a',step1,'-b',multiple_beds,'-wa -wb | cut -f1,2,3,8 >',step2)
+  cmd <- paste('intersectBed -a',step1,'-b',multiple_beds,'-wa -wb | cut -f1,2,3,9 >',step2)
   system(cmd)
   
   # step 3 : 
@@ -87,8 +88,6 @@ for(k in clusters){
   }
   
   length(hb_to_exclude)/length(hb) # fraction of hb with multiple spanning CNs 
-  
-  m <- m[which(!m$haploblock %in% hb_to_exclude),c()]
   
   # step 5 : write haplo type blocks with associated copy number
   step5 <- paste0('step5_',k,'.bed')

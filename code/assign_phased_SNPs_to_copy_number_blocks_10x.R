@@ -1,4 +1,4 @@
-# module load bedtools
+# module load bedtools/2.24.0 bedops/2.4.14
 
 single_cells_bed <- list.files(path = "/icgc/dkfzlsdf/analysis/B260/projects/chromothripsis_medulloblastoma/single_cell_cn_10x/dna/sample1.genemodel.transcript/tmp.parallel",pattern = 'cellid_',full.names = T)
 
@@ -26,10 +26,7 @@ summary(x$V3-x$V2)
 # scdna_clusters <- scdna_clusters[,2:4]
 
 # scdna_clusters <- read.delim("/icgc/dkfzlsdf/analysis/B260/projects/chromothripsis_medulloblastoma/data/10xCNV/STP/STP-Nuclei/processed_data/cluster9_cell_ids.txt")
-# scdna_clusters <- read.delim("/icgc/dkfzlsdf/analysis/B260/projects/chromothripsis_medulloblastoma/data/10xCNV/STP/STP-Nuclei/processed_data/cluster12_cell_ids.txt")
-
-# G&T-seq scDNA
-scdna_clusters <- read.delim("/icgc/dkfzlsdf/analysis/B260/projects/chromothripsis_medulloblastoma/data/10xCNV/help_files/STP-PDX_G&T_bin_20kb_as_CellRanger/cluster9_eb_cell_ids.txt")
+scdna_clusters <- read.delim("/icgc/dkfzlsdf/analysis/B260/projects/chromothripsis_medulloblastoma/data/10xCNV/STP/STP-Nuclei/processed_data/cluster12_cell_ids.txt")
 
 scdna_clusters <- scdna_clusters[,2:3]
 colnames(scdna_clusters) <- c("CELL_ID","LABEL")
@@ -97,8 +94,6 @@ for(k in clusters){
   }
   
   length(hb_to_exclude)/length(hb) # fraction of hb with multiple spanning CNs 
-  
-  m <- m[which(!m$haploblock %in% hb_to_exclude),c()]
   
   # step 5 : write haplo type blocks with associated copy number
   step5 <- paste0('step5_',k,'.bed')
