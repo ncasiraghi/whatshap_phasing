@@ -3,17 +3,23 @@
 library(data.table)
 library(parallel)
 
-# INPUTS
+# INPUTS scDNA 10x
+if(FALSE){
+  single_cells_bed <- list.files(path = "/icgc/dkfzlsdf/analysis/B260/projects/chromothripsis_medulloblastoma/single_cell_cn_10x/dna/sample1.genemodel.transcript/tmp.parallel",pattern = 'cellid_',full.names = T)
+  cell_ids <- readLines(con = "/icgc/dkfzlsdf/analysis/B260/projects/chromothripsis_medulloblastoma/whatshap_phasing/outs/copy_number_blocks_10xCNV_data/scDNA_362cells_IDs.txt")
+  outdir <- "/icgc/dkfzlsdf/analysis/B260/projects/chromothripsis_medulloblastoma/whatshap_phasing/outs/copy_number_blocks_10xCNV_data/single_cells_362cells"
+}
 
-single_cells_bed <- list.files(path = "/icgc/dkfzlsdf/analysis/B260/projects/chromothripsis_medulloblastoma/single_cell_cn_10x/dna/sample1.genemodel.transcript/tmp.parallel",pattern = 'cellid_',full.names = T)
+# INPUTS scDNA G&T
+if(TRUE){
+  single_cells_bed <- list.files(path = "/icgc/dkfzlsdf/analysis/B260/projects/chromothripsis_medulloblastoma/single_cell_cn_GTseq/dna/cnvkit/wgs_normal_as_ctrl_bin_20kb_as_CellRanger/cns_bed/",pattern = '\\.nochr.bed$',full.names = T)
+  cell_ids <- readLines(con = "/icgc/dkfzlsdf/analysis/B260/projects/chromothripsis_medulloblastoma/whatshap_phasing/outs/copy_number_blocks_GTseq_data/scDNA_GTseq_89cells_IDs.txt")
+  outdir <- "/icgc/dkfzlsdf/analysis/B260/projects/chromothripsis_medulloblastoma/whatshap_phasing/outs/copy_number_blocks_GTseq_data/single_cells_89cells"
+}
 
 haplotype_blocks <- "/icgc/dkfzlsdf/analysis/B260/projects/chromothripsis_medulloblastoma/whatshap_phasing/outs/tmp_analysis/phased_Hg19_Nanopore.sort.noChr.3cols.bed"
 
 phased_snps <- "/icgc/dkfzlsdf/analysis/B260/projects/chromothripsis_medulloblastoma/whatshap_phasing/outs/tmp_analysis/phased_Hg19_Nanopore.sort.noChr.OnlyPhased.vcf"
-
-cell_ids <- readLines(con = "/icgc/dkfzlsdf/analysis/B260/projects/chromothripsis_medulloblastoma/whatshap_phasing/outs/copy_number_blocks_10xCNV_data/scDNA_362cells_IDs.txt")
-
-outdir <- "/icgc/dkfzlsdf/analysis/B260/projects/chromothripsis_medulloblastoma/whatshap_phasing/outs/copy_number_blocks_10xCNV_data/single_cells_362cells"
 
 mc.cores <- 20
 
@@ -80,7 +86,6 @@ GetAnnotedSNPs <- function(i,single_cells_bed,haplotype_blocks,phased_snps){
   m <- m[,c("SNP_CHROM","SNP_POS","SNP_REF","SNP_ALT","SNP_PHASE_INFO","HB_CHROM","HB_START","HB_END","COPY_NUMBER")]
   write.table(m,file = step8,col.names = TRUE,row.names = FALSE,quote = FALSE,sep = "\t")
   
-
 }
 
 mclapply(seq(single_cells_bed),GetAnnotedSNPs,single_cells_bed=single_cells_bed,haplotype_blocks=haplotype_blocks,phased_snps=phased_snps,mc.cores = mc.cores)
