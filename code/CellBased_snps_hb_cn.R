@@ -15,7 +15,7 @@ cell_ids <- readLines(con = "/icgc/dkfzlsdf/analysis/B260/projects/chromothripsi
 
 outdir <- "/icgc/dkfzlsdf/analysis/B260/projects/chromothripsis_medulloblastoma/whatshap_phasing/outs/copy_number_blocks_10xCNV_data/single_cells_362cells"
 
-mc.cores <- 10
+mc.cores <- 20
 
 ## RUN
 setwd(outdir)
@@ -59,11 +59,13 @@ GetAnnotedSNPs <- function(i,single_cells_bed,haplotype_blocks,phased_snps){
   step7 <- paste0('step7_',CELL_ID,'.bed')
   cmd <- paste('intersectBed -a',step5,'-b',phased_snps,'-wa -wb >',step7)
   system(cmd)
+  file.remove(step4,step5)
   
   # step 8 : reduce table columns and wrinte final output
   step8 <- paste0('step8_',CELL_ID,'.bed')
   cmd <- paste('cut -f 1-6,8,9,14',step7,'>',step8)
   system(cmd)
+  file.remove(step7)
   
   m <- fread(file = step8,data.table = FALSE)
   header <- c("HB_CHROM","HB_START","HB_END","COPY_NUMBER","SNP_CHROM","SNP_POS","SNP_REF","SNP_ALT","SNP_PHASE_INFO")
@@ -78,7 +80,6 @@ GetAnnotedSNPs <- function(i,single_cells_bed,haplotype_blocks,phased_snps){
   m <- m[,c("SNP_CHROM","SNP_POS","SNP_REF","SNP_ALT","SNP_PHASE_INFO","HB_CHROM","HB_START","HB_END","COPY_NUMBER")]
   write.table(m,file = step8,col.names = TRUE,row.names = FALSE,quote = FALSE,sep = "\t")
   
-  file.remove(step4,step5,step7)
 
 }
 

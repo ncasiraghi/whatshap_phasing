@@ -1,6 +1,6 @@
 #!/bin/sh 
 #BSUB -J scBED
-#BSUB -n 10
+#BSUB -n 20
 #BSUB -q long
 #BSUB -e scBED.log 
 #BSUB -o scBED.txt 
