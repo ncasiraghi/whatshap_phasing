@@ -1,6 +1,9 @@
 # module load bedtools/2.24.0
 
 library(data.table)
+library(parallel)
+
+# INPUTS
 
 single_cells_bed <- list.files(path = "/icgc/dkfzlsdf/analysis/B260/projects/chromothripsis_medulloblastoma/single_cell_cn_10x/dna/sample1.genemodel.transcript/tmp.parallel",pattern = 'cellid_',full.names = T)
 
@@ -12,11 +15,15 @@ cell_ids <- readLines(con = "/icgc/dkfzlsdf/analysis/B260/projects/chromothripsi
 
 outdir <- "/icgc/dkfzlsdf/analysis/B260/projects/chromothripsis_medulloblastoma/whatshap_phasing/outs/copy_number_blocks_10xCNV_data/single_cells_362cells"
 
+mc.cores <- 10
+
+## RUN
 setwd(outdir)
 
 single_cells_bed <- single_cells_bed[which(basename(single_cells_bed) %in% paste0(cell_ids,".bed"))]
 
-for(bed_file in single_cells_bed){
+GetAnnotedSNPs <- function(i,single_cells_bed,haplotype_blocks,phased_snps){
+  bed_file <- single_cells_bed[i]
   message(basename(bed_file))
   CELL_ID <- gsub(basename(bed_file),pattern = "\\.bed$",replacement = "")
   
@@ -67,10 +74,12 @@ for(bed_file in single_cells_bed){
   }
   
   m$SNP_PHASE_INFO <- unlist(lapply(X = m$SNP_PHASE_INFO,FUN = reduce_info))
-
+  
   m <- m[,c("SNP_CHROM","SNP_POS","SNP_REF","SNP_ALT","SNP_PHASE_INFO","HB_CHROM","HB_START","HB_END","COPY_NUMBER")]
   write.table(m,file = step8,col.names = TRUE,row.names = FALSE,quote = FALSE,sep = "\t")
   
   file.remove(step4,step5,step7)
 
 }
+
+mclapply(seq(single_cells_bed),GetAnnotedSNPs,single_cells_bed=single_cells_bed,haplotype_blocks=haplotype_blocks,phased_snps=phased_snps,mc.cores = mc.cores)
