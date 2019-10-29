@@ -1,4 +1,6 @@
 inputs/
 outs/
+code/*.log
+code/*.txt
 .Rproj.user
 .Rhistory
